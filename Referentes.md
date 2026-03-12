@@ -62,3 +62,17 @@ https://www.sciencedirect.com/science/article/pii/S1746809425012534
 
 ## Datasets
 Utilizamos el conjunto de datos disponible públicamente del conjunto de datos Kaggle, compuesto por 6939 imágenes de rayos X
+
+# 
+# Explainable Deep Learning for Pediatric Pneumonia Detection in Chest X-Ray Images
+
+## Fecha 2026
+
+https://arxiv.org/pdf/2601.09814
+
+## Algoritmos
+Dense Net121 and EfficientNet-B0
+
+## Datasets
+chest X-ray dataset introduced by Kermany, The dataset consists of 5,863 anterior–posterior (AP) chest radio
+graphs from children between the ages of one and five years
