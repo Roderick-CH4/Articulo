@@ -84,3 +84,20 @@ Dense Net121 and EfficientNet-B0
 ## Datasets
 chest X-ray dataset introduced by Kermany, The dataset consists of 5,863 anterior–posterior (AP) chest radio
 graphs from children between the ages of one and five years
+
+---
+--- 
+
+# Un Marco Híbrido de Aprendizaje Profundo para el Diagnóstico Automatizado de Trastornos Dentales a partir de Imágenes de Rayos X
+# A Hybrid Deep Learning Framework for Automated Dental Disorder Diagnosis from X-Ray Images
+
+## Fecha 2026
+
+https://digitalmanuscriptpedia.com/conferences/index.php/DMP-LNMR/article/download/95/95v
+
+## Algoritmos
+It combined HOG as handcrafted descriptors with DenseNet-201 and the Swin Transformer for transformer-based features, capturing complementary information and encompassing fine-grained low-level spatial characteristics as well as rich high-level semantic representations. 
+
+## Datasets
+The DRAD dataset focused on dental radiography analysis and diagnosis. The dataset consists of 1272 X-ray images. (No estoy seguro que sea publico)
+
