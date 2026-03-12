@@ -18,6 +18,9 @@ Modelo híbrido Gabor-CNN
 | OrganCMNIST                                 | TAC abdominal                            | 11      | 23,583  |
 | COVID-QU-Ex                                 | Radiografía de tórax (CXR)               | 3       | 33,026  |
 
+---
+---
+
 # Análisis comparativo de arquitecturas híbridas CNN-Transformer para la clasificación de imágenes médicas en múltiples tipos de cáncer.
 # Comparative Analysis of Hybrid CNN-Transformer Architectures for Medical Image Classification Across Multiple Cancer Types
 
@@ -26,7 +29,6 @@ Modelo híbrido Gabor-CNN
 https://www.researchgate.net/profile/Afex-Callagher/publication/399466221_Comparative_Analysis_of_Hybrid_CNN-Transformer_Architectures_for_Medical_Image_Classification_Across_Multiple_Cancer_Types/links/695c28af27359023a013c9c7/Comparative-Analysis-of-Hybrid-CNN-Transformer-Architectures-for-Medical-Image-Classification-Across-Multiple-Cancer-Types.pdf
 
 ## Algoritmos
-- Model Architectures: 
 - Pure CNNs: ResNet-50 and DenseNet-121, pretrained on ImageNet. 
 - Pure Transformer: Vision Transformer Base/16 (ViT-B/16), pretrained on 
 ImageNet-21k. 
@@ -43,8 +45,11 @@ Transformer encoder).
 | PCam (Metastasis Detection) | Metástasis en ganglios linfáticos | Histopatología (patches) | 2 | 327,680 | Dataset basado en parches para detección de cáncer metastásico de mama en secciones de ganglios linfáticos (Veeling et al., 2018). |
 | Brain Tumor MRI (Brain) | Tumor cerebral | Resonancia Magnética (MRI) | 4 | 7,023 | Imágenes MRI T1 con contraste con clases: glioma, meningioma, pituitary tumor y no tumor (Cheng et al., 2016). |
 
+---
+---
+
 # Una comparación experimental de modelos de aprendizaje profundo para la clasificación de neumonías a partir de imágenes de radiografías de tórax
-#An experimental comparison of deep learning models for pneumonia classification from chest X-ray images
+# An experimental comparison of deep learning models for pneumonia classification from chest X-ray images
 
 https://www.sciencedirect.com/science/article/pii/S1746809425012534
 
@@ -63,7 +68,10 @@ https://www.sciencedirect.com/science/article/pii/S1746809425012534
 ## Datasets
 Utilizamos el conjunto de datos disponible públicamente del conjunto de datos Kaggle, compuesto por 6939 imágenes de rayos X
 
-# 
+--- 
+---
+
+# Aprendizaje profundo explicable para la detección de neumonía pediátrica en imágenes de radiografía de tórax
 # Explainable Deep Learning for Pediatric Pneumonia Detection in Chest X-Ray Images
 
 ## Fecha 2026
