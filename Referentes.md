@@ -1,5 +1,5 @@
-# Un enfoque híbrido ligero de aprendizaje profundo de Gabor y su aplicación a la clasificación de imágenes médicas
-# A Lightweight Hybrid Gabor Deep Learning Approach and its Application to Medical Image Classification
+## Un enfoque híbrido ligero de aprendizaje profundo de Gabor y su aplicación a la clasificación de imágenes médicas
+## A Lightweight Hybrid Gabor Deep Learning Approach and its Application to Medical Image Classification
 
 ### Fecha 2026
 
@@ -21,8 +21,8 @@ Modelo híbrido Gabor-CNN
 ---
 ---
 
-# Análisis comparativo de arquitecturas híbridas CNN-Transformer para la clasificación de imágenes médicas en múltiples tipos de cáncer.
-# Comparative Analysis of Hybrid CNN-Transformer Architectures for Medical Image Classification Across Multiple Cancer Types
+## Análisis comparativo de arquitecturas híbridas CNN-Transformer para la clasificación de imágenes médicas en múltiples tipos de cáncer.
+## Comparative Analysis of Hybrid CNN-Transformer Architectures for Medical Image Classification Across Multiple Cancer Types
 
 ### Fecha 2026
 
@@ -48,8 +48,8 @@ Transformer encoder).
 ---
 ---
 
-# Una comparación experimental de modelos de aprendizaje profundo para la clasificación de neumonías a partir de imágenes de radiografías de tórax
-# An experimental comparison of deep learning models for pneumonia classification from chest X-ray images
+## Una comparación experimental de modelos de aprendizaje profundo para la clasificación de neumonías a partir de imágenes de radiografías de tórax
+## An experimental comparison of deep learning models for pneumonia classification from chest X-ray images
 
 https://www.sciencedirect.com/science/article/pii/S1746809425012534
 
@@ -71,8 +71,8 @@ Utilizamos el conjunto de datos disponible públicamente del conjunto de datos K
 --- 
 ---
 
-# Aprendizaje profundo explicable para la detección de neumonía pediátrica en imágenes de radiografía de tórax
-# Explainable Deep Learning for Pediatric Pneumonia Detection in Chest X-Ray Images
+## Aprendizaje profundo explicable para la detección de neumonía pediátrica en imágenes de radiografía de tórax
+## Explainable Deep Learning for Pediatric Pneumonia Detection in Chest X-Ray Images
 
 ### Fecha 2026
 
@@ -88,8 +88,8 @@ graphs from children between the ages of one and five years
 ---
 --- 
 
-# Un Marco Híbrido de Aprendizaje Profundo para el Diagnóstico Automatizado de Trastornos Dentales a partir de Imágenes de Rayos X
-# A Hybrid Deep Learning Framework for Automated Dental Disorder Diagnosis from X-Ray Images
+## Un Marco Híbrido de Aprendizaje Profundo para el Diagnóstico Automatizado de Trastornos Dentales a partir de Imágenes de Rayos X
+## A Hybrid Deep Learning Framework for Automated Dental Disorder Diagnosis from X-Ray Images
 
 ### Fecha 2026
 
