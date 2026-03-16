@@ -233,3 +233,42 @@ This Brain Tumor MRI dataset (https://www.kaggle.com/datasets/masoudnickparvar/b
 The chest X-ray (Pneumonia) dataset (https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia) consists of radio-graphic images collected from pediatric patients aged between one and five years, sourced from the Women and Children’s Medical Center in Guangzhou, China. This dataset comprises a total of 5,836 chest X-ray images
 
 The IQ-OTH/NCCD–Lung Cancer Dataset (https://www.kaggle.com/datasets/hamdallak/the-iqothnccd-lung-cancer-dataset) is a pub-licly available collection of CT scan images specifically utilized for lung cancer detection and classification tasks. This dataset contains a total of 1,190 CT images collected
+
+---
+# 12
+
+## Segmentación y clasificación de tumores cerebrales: Un enfoque híbrido de aprendizaje profundo CVAE-UNETR-ResNet50-VGG16
+## Brain tumor segmentation and classification: A CVAE-UNETR-ResNet50-VGG16 hybrid deep learning approach
+
+### Fecha 2026
+
+https://www.sciencedirect.com/science/article/pii/S1110016826000037
+
+### Algoritmos
+We use build a hybrid DL model that uses ResNet50 with VGG16 for MRI brain image classification and UNET for segmentation
+
+### Datasets
+A limited dataset comprising only 253 samples is utilized in this paper. The dataset is openly accessible in Ref. [38] which consists of cancer or normal samples with its label. https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset
+
+---
+# 13
+
+## FHD-HybridNet: Un marco híbrido de aprendizaje profundo guiado por la distancia de Hellinger difusa para la clasificación robusta de tumores cerebrales multiclase
+## FHD-HybridNet: A fuzzy hellinger distance-guided hybrid deep learning framework for robust multiclass brain tumor classification
+
+### Fecha 2026
+
+https://www.sciencedirect.com/science/article/pii/S1110016826000037
+
+### Algoritmos
+Models base of CNN
+DenseNet121DenseNet121
+MobileNetV1MobileNetV1
+ResNet50
+
+Ensemble 
+Fuzzy Hellinger Distance (FHD)
+
+Result a hybrid architecture FHD-HybridNet
+### Datasets
+This study utilized a curated collection of MRI scans from multiple renowned sources rather than relying on isolated datasets. The dataset includes images from the SARTAJ dataset [21], the Br35H dataset [22], and samples provided in the study by Cheng et al., hosted on Figshare [23]. The curated dataset [24] comprises four distinct classes of MRI brain scans.
