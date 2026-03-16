@@ -101,3 +101,19 @@ It combined HOG as handcrafted descriptors with DenseNet-201 and the Swin Transf
 ### Datasets
 The DRAD dataset focused on dental radiography analysis and diagnosis. The dataset consists of 1272 X-ray images. (No estoy seguro que sea publico)
 
+---
+---
+
+## Modelo CNN general para la clasificación de imágenes biomédicas mediante optimización de hiperparámetros basada en algoritmos genéticos
+## General CNN model for biomedical image classification via genetic algorithm-based hyperparameter optimization
+
+### Fecha 2026
+
+https://www.sciencedirect.com/science/article/pii/S209044792500632X
+
+### Algoritmos
+CNN optimized via Genetic Algorithm (GA)
+
+### Datasets
+we use three biomedical datasets: MS, Alzheimer’s, and COVID-19 datasets. While the MS dataset is used for GA to optimize the CNN hyperparameters and test the optimized CNN, Alzheimer’s and COVID-19 are used only for the generalization test of the optimized CNN.
+
