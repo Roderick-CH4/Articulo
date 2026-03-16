@@ -272,3 +272,51 @@ Fuzzy Hellinger Distance (FHD)
 Result a hybrid architecture FHD-HybridNet
 ### Datasets
 This study utilized a curated collection of MRI scans from multiple renowned sources rather than relying on isolated datasets. The dataset includes images from the SARTAJ dataset [21], the Br35H dataset [22], and samples provided in the study by Cheng et al., hosted on Figshare [23]. The curated dataset [24] comprises four distinct classes of MRI brain scans.
+
+---
+# 14
+
+## MammXAI: Un enfoque de aprendizaje profundo multi-modelo adaptativo integrado con XAI para la detección de cáncer de mama usando imágenes de multimodalidad
+## MammXAI: An XAI integrated adaptive multi-model deep learning approach for breast cancer detection using multi-modality images
+
+### Fecha 2026
+
+https://www.sciencedirect.com/science/article/pii/S1746809425016842
+
+### Algoritmos
+The proposed ETCapsNet introduces a hybrid deep learning architecture that synergistically integrates three robust components: EfficientNetv2 Small, Transformer blocks, and Capsule Networks.
+
+XAI
+Grad-CAM
+Grad-CAM++
+Score-CAM
+SmoothGrad
+Integrated Gradients
+Occlusion Sensitivity
+PDA (Prediction Difference Analysis)
+LIME
+
+### Datasets
+The first dataset used in this study was introduced at the 15th International Conference on Image Analysis and Recognition (ICIAR-2018) as a grand challenge on BreAst Cancer Histology (BACH) images [58].
+
+Another dataset included in this study is Breast UltraSound Images (BUSI), which were gathered in 2018 from women aged 25 to 75 [59].
+
+The third dataset combines mammography images from three different datasets. Initially, it included 106 mass images from the InBreast dataset, 53 from the Mammographic Image Analysis Society (MIAS) dataset, and 2188 from the Digital Database for Screening Mammography (DDSM) dataset, which were split into two classes: benign and malignant [60].
+
+---
+# 15
+
+## Mejora de la detección temprana de la enfermedad de Alzheimer mediante la arquitectura de aprendizaje automático Vision Transformer utilizando imágenes de resonancia magnética
+## Enhancing Early Detection of Alzheimer’s Disease via Vision Transformer Machine Learning Architecture Using MRI Images
+
+### Fecha 2026
+
+https://www.mdpi.com/2078-2489/17/2/163
+
+### Algoritmos
+ViT (Vision Transformer)
+
+ViT used Multi-Head Self-Attention, MLP, AdamW
+
+### Datasets
+In this experiment, the AD MRI dataset from Kaggle was used [38]. The 6400 pre processed MRI scans are divided into four categories: ND, MD, MoD, and VMD. 
