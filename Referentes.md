@@ -1,6 +1,5 @@
 ---
 # 1
----
 
 ## Un enfoque híbrido ligero de aprendizaje profundo de Gabor y su aplicación a la clasificación de imágenes médicas
 ## A Lightweight Hybrid Gabor Deep Learning Approach and its Application to Medical Image Classification
@@ -24,7 +23,6 @@ Modelo híbrido Gabor-CNN
 
 ---
 # 2
----
 
 ## Análisis comparativo de arquitecturas híbridas CNN-Transformer para la clasificación de imágenes médicas en múltiples tipos de cáncer.
 ## Comparative Analysis of Hybrid CNN-Transformer Architectures for Medical Image Classification Across Multiple Cancer Types
@@ -52,7 +50,6 @@ Transformer encoder).
 
 ---
 # 3
----
 
 ## Una comparación experimental de modelos de aprendizaje profundo para la clasificación de neumonías a partir de imágenes de radiografías de tórax
 ## An experimental comparison of deep learning models for pneumonia classification from chest X-ray images
@@ -76,7 +73,6 @@ Utilizamos el conjunto de datos disponible públicamente del conjunto de datos K
 
 --- 
 # 4
----
 
 ## Aprendizaje profundo explicable para la detección de neumonía pediátrica en imágenes de radiografía de tórax
 ## Explainable Deep Learning for Pediatric Pneumonia Detection in Chest X-Ray Images
@@ -93,8 +89,7 @@ chest X-ray dataset introduced by Kermany, The dataset consists of 5,863 anterio
 graphs from children between the ages of one and five years
 
 ---
-# 5
---- 
+# 5 
 
 ## Un Marco Híbrido de Aprendizaje Profundo para el Diagnóstico Automatizado de Trastornos Dentales a partir de Imágenes de Rayos X
 ## A Hybrid Deep Learning Framework for Automated Dental Disorder Diagnosis from X-Ray Images
@@ -111,7 +106,6 @@ The DRAD dataset focused on dental radiography analysis and diagnosis. The datas
 
 ---
 # 6
----
 
 ## Modelo CNN general para la clasificación de imágenes biomédicas mediante optimización de hiperparámetros basada en algoritmos genéticos
 ## General CNN model for biomedical image classification via genetic algorithm-based hyperparameter optimization
@@ -128,7 +122,6 @@ we use three biomedical datasets: MS, Alzheimer’s, and COVID-19 datasets. Whil
 
 ---
 # 7
----
 
 ## HyOCNN: Red neuronal convolucional optimizada híbrida para clasificación de imágenes robusta
 ## HyOCNN: Hybrid-optimized convolutional neural network for robust imageclassification
@@ -155,5 +148,88 @@ The rest of the three datasets were onlytested to further test the generalizatio
 
 ---
 # 8
----
 
+## Clasificación radiográfica de tumores óseos primarios impulsada por aprendizaje profundo utilizando modelos híbridos aumentados con atención
+## Deep learning driven radiographic classification of primary bone tumorsusing attention augmented hybrid models
+
+### Fecha 2026
+
+https://www.sciencedirect.com/science/article/pii/S1746809425013990
+
+### Algoritmos
+Convolutional Neural Networks Transformer (CNNT) model --> CNN + Transformer Model
+ResNet50 and Convolutional Block Attention Module (CBAM)model --> ResNet50 + CBAM Model Training for Bone TumorClassification
+
+### Datasets
+In this work, we used the BTXRD dataset, an open dataset for theclassification, localization, and segmentation of primary bone tumorsfrom radiographs [13]. The dataset consists of 3746 X-ray images,including 1879 standard bone images, 1525 benign bone tumor images,and 342 malignant bone tumor images.
+
+---
+# 9
+
+## Bone-CNN: Una Arquitectura de Aprendizaje Profundo Ligera para la Clasificación Multiclase de Tumores Óseos Primarios en Radiografías
+## Bone-CNN: A Lightweight Deep Learning Architecture for Multi-Class Classification of Primary Bone Tumours in Radiographs
+
+### Fecha 2026
+
+https://www.mdpi.com/2227-9059/14/2/299
+
+### Algoritmos
+Thep roposed Bone-CNN refers to a lightweight CNN architecture optimised for bone tumour image classification, using depthwise separable convolutions, multi-scale
+learning, and compact classification heads to focus on the efficient extraction of features for primary bone tumour classification on radiographic images.
+
+### Datasets
+This study uses the publicly available Radiograph Dataset for the Classification, Localization, and Segmentation of Primary Bone Tumors, introduced by Yao et al. [22]. The original collection contains 884 anonymised radiographs across nine primary bone tumour categories, sourced from multiple imaging centres and released under a CC-BY 4.0 licence.
+
+---
+# 10
+
+## Arquitecturas de aprendizaje profundo en conjunto para detectar tuberculosis pulmonar en radiografías de tórax
+## Ensemble deep learning architectures for detecting pulmonary tuberculosis in chest X-rays
+
+### Fecha 2026
+
+https://www.nature.com/articles/s41598-025-30792-x
+
+### Algoritmos
+Convolutional Autoencoder (CAE-NN)
+This architecture enables the CAE-NN to learn compact, high-level representations of the CXRs, contributing to  the overall robustness and performance of the TB diagnostic process.
+
+Multi-Scale CNN (MS-CNN)
+A multi-scale ResNet34 with deep layer aggregation35 is proposed for improved feature extraction and classification. 
+
+Actually use a hybrid modedl combined Convolutional Autoencoder (CAE-NN) + Multi-Scale CNN (MS-CNN)
+
+### Datasets
+The efficiency of the proposed methodology was evaluated using two public datasets from the NLM/NIH and a private dataset containing cases from Songklanagarind Hospital.
+
+NLM collection—Montgomery County X-ray dataset (MC)
+NLM collection—Shenzhen hospital X-ray dataset (SZ)
+Songklanagarind hospital dataset (SK)
+
+---
+# 11
+
+## Análisis mejorado de imágenes médicas utilizando un algoritmo híbrido de optimización de solubilidad de gas Henry con redes neuronales apiladas AdaBoost optimizadas
+## Enhanced medical image analysis using hybrid Henry gas Solubility optimization algorithm with optimized AdaBoost stacked neural networks
+
+### Fecha 2026
+
+https://www.sciencedirect.com/science/article/pii/S0957417425024996
+
+### Algoritmos
+Feature extraction is conducted using a stacked GRU-RNN approach that captures both spatial and temporal dependencies within medical images
+
+The HHGSO algorithm is employed to fine-tune the hyperparameters of the GRURNN. HHGSO integrates multiple metaheuristic strategies like STOA, Jaya, OSA, and BOA within a dynamic reward-penalty mechanism to enhance global search capability and avoid local minima.
+
+The AdaBoost ensemble strategy is applied to improve classification accuracy and address class imbalance issues
+
+Hybrid model combine extraction, optimization and classification --> HHGSO-ASGRNet
+
+### Datasets
+In this study, three publicly available medical imaging datasets were employed to ensure thorough validation and performance assessment of the proposed model across different clinical scenarios.
+
+This Brain Tumor MRI dataset (https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset) comprises 7022 MRI images of the human brain
+
+The chest X-ray (Pneumonia) dataset (https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia) consists of radio-graphic images collected from pediatric patients aged between one and five years, sourced from the Women and Children’s Medical Center in Guangzhou, China. This dataset comprises a total of 5,836 chest X-ray images
+
+The IQ-OTH/NCCD–Lung Cancer Dataset (https://www.kaggle.com/datasets/hamdallak/the-iqothnccd-lung-cancer-dataset) is a pub-licly available collection of CT scan images specifically utilized for lung cancer detection and classification tasks. This dataset contains a total of 1,190 CT images collected
