@@ -1,3 +1,7 @@
+---
+# 1
+---
+
 ## Un enfoque híbrido ligero de aprendizaje profundo de Gabor y su aplicación a la clasificación de imágenes médicas
 ## A Lightweight Hybrid Gabor Deep Learning Approach and its Application to Medical Image Classification
 
@@ -19,6 +23,7 @@ Modelo híbrido Gabor-CNN
 | COVID-QU-Ex                                 | Radiografía de tórax (CXR)               | 3       | 33,026  |
 
 ---
+# 2
 ---
 
 ## Análisis comparativo de arquitecturas híbridas CNN-Transformer para la clasificación de imágenes médicas en múltiples tipos de cáncer.
@@ -46,6 +51,7 @@ Transformer encoder).
 | Brain Tumor MRI (Brain) | Tumor cerebral | Resonancia Magnética (MRI) | 4 | 7,023 | Imágenes MRI T1 con contraste con clases: glioma, meningioma, pituitary tumor y no tumor (Cheng et al., 2016). |
 
 ---
+# 3
 ---
 
 ## Una comparación experimental de modelos de aprendizaje profundo para la clasificación de neumonías a partir de imágenes de radiografías de tórax
@@ -69,6 +75,7 @@ https://www.sciencedirect.com/science/article/pii/S1746809425012534
 Utilizamos el conjunto de datos disponible públicamente del conjunto de datos Kaggle, compuesto por 6939 imágenes de rayos X
 
 --- 
+# 4
 ---
 
 ## Aprendizaje profundo explicable para la detección de neumonía pediátrica en imágenes de radiografía de tórax
@@ -86,6 +93,7 @@ chest X-ray dataset introduced by Kermany, The dataset consists of 5,863 anterio
 graphs from children between the ages of one and five years
 
 ---
+# 5
 --- 
 
 ## Un Marco Híbrido de Aprendizaje Profundo para el Diagnóstico Automatizado de Trastornos Dentales a partir de Imágenes de Rayos X
@@ -102,6 +110,7 @@ It combined HOG as handcrafted descriptors with DenseNet-201 and the Swin Transf
 The DRAD dataset focused on dental radiography analysis and diagnosis. The dataset consists of 1272 X-ray images. (No estoy seguro que sea publico)
 
 ---
+# 6
 ---
 
 ## Modelo CNN general para la clasificación de imágenes biomédicas mediante optimización de hiperparámetros basada en algoritmos genéticos
@@ -116,4 +125,35 @@ CNN optimized via Genetic Algorithm (GA)
 
 ### Datasets
 we use three biomedical datasets: MS, Alzheimer’s, and COVID-19 datasets. While the MS dataset is used for GA to optimize the CNN hyperparameters and test the optimized CNN, Alzheimer’s and COVID-19 are used only for the generalization test of the optimized CNN.
+
+---
+# 7
+---
+
+## HyOCNN: Red neuronal convolucional optimizada híbrida para clasificación de imágenes robusta
+## HyOCNN: Hybrid-optimized convolutional neural network for robust imageclassification
+
+### Fecha 2026
+
+https://www.sciencedirect.com/science/article/pii/S1746809425015514
+
+### Algoritmos
+The proposed model utilizes the Xception architecture, To optimize modelperformance, a hybrid PSO-GA. Finally this hybrid modedl was named the optimized HyOCNN architecture.
+
+### Datasets
+The original dataset wascreated and collected by Khan et al. [28]1, and named Dataset-1 (asdescribed in Table 1), this dataset was used to train, validate and testour proposed HyOCNN model.
+
+The rest of the three datasets were onlytested to further test the generalization and the resilience of HyOCNN.They gathered a sample of publicly available databases with chest X-ray images on GitHub and the Kaggle repositories of four categories:COVID-19, normal, bacterial pneumonia, and viral pneumonia.
+
+| Categoría | Dataset-1 Train | Dataset-1 Test | Dataset-1 Total | Dataset-2 | Dataset-3 | Dataset-4 | Test |
+|-----------|----------------|---------------|---------------|-----------|-----------|-----------|------|
+| COVID-19 | 224 | 60 | 284 | 341 | 341 | 341 | 45 |
+| Normal | 237 | 73 | 310 | 2800 | – | – | 76 |
+| Bacterial pneumonia | 256 | 74 | 330 | – | – | 2772 | 74 |
+| Viral pneumonia | 257 | 70 | 327 | – | 1493 | – | 63 |
+| **Total** | **974** | **277** | **1251** | **3141** | **1834** | **3113** | **258** |
+
+---
+# 8
+---
 
