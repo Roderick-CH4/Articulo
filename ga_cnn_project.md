@@ -570,22 +570,69 @@ best = genetic_algorithm(
 print("Mejor configuración:", best)
 ````
 
+Evaluate.py 
+
 ````python
-from train import train_model
+import torch
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+
+def evaluate_model(model, test_loader):
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    model.eval()
+
+    all_preds = []
+    all_labels = []
+
+    with torch.no_grad():
+        for images, labels in test_loader:
+            images, labels = images.to(device), labels.to(device)
+
+            outputs = model(images)
+
+            # Predicción
+            _, preds = torch.max(outputs, 1)
+
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+
+    # =========================
+    # MÉTRICAS (MULTICLASE)
+    # =========================
+    accuracy = accuracy_score(all_labels, all_preds)
+    precision = precision_score(all_labels, all_preds, average='weighted', zero_division=0)
+    recall = recall_score(all_labels, all_preds, average='weighted', zero_division=0)
+    f1 = f1_score(all_labels, all_preds, average='weighted', zero_division=0)
+
+    print("\n=== RESULTADOS ===")
+    print(f"Accuracy:  {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall:    {recall:.4f}")
+    print(f"F1-score:  {f1:.4f}")
+
+    return {
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1
+    }
+````
+
+````pyhton
 from evaluate import evaluate_model
+from train import train_model
 from utils import get_dataloaders
 
-# mejores parámetros del GA
-best_params = best  # o los copias manualmente
-
 # cargar datos
-train_loader, val_loader, test_loader = get_dataloaders('/content/drive/MyDrive/ga_cnn_project/data')
+train_loader, val_loader, test_loader = get_dataloaders("/content/data")
 
-# entrenamiento final (más epochs)
-model, _ = train_model(best_params, '/content/drive/MyDrive/ga_cnn_project/data', epochs=20)
+# entrenar modelo final
+model, _ = train_model(best_params, "/content/data", epochs=20)
 
-# evaluación
-evaluate_model(model, test_loader)
+# evaluar
+results = evaluate_model(model, test_loader)
 ````
 
 
