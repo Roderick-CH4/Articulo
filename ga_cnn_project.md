@@ -92,6 +92,7 @@ def get_dataloaders(data_dir, batch_size=32):
         val_data,
         batch_size=batch_size,
         shuffle=False,
+        drop_last=True,
         num_workers=2,
         pin_memory=True
     )
