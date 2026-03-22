@@ -570,8 +570,8 @@ from ga.genetic_algorithm import genetic_algorithm
 
 best = genetic_algorithm(
     data_dir="/content/drive/MyDrive/ga_cnn_project/data",  
-    population_size=5,
-    generations=3
+    population_size=5, #30
+    generations=3 #20
 )
 ````
 
