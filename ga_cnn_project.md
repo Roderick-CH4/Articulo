@@ -1,7 +1,7 @@
 # Reconstruct General CNN model for biomedical image classification via genetic 
 algorithm-based hyperparameter optimization
 
-We try to reconstruct architecture to this article
+We try to reconstruct architecture to this article https://www.sciencedirect.com/science/article/pii/S209044792500632X
 using in the first part google colabs and then copy into local machine.
 
 ### Project's structure
@@ -17,3 +17,5 @@ ga_cnn_project/
 ├── evaluate.py
 └── utils.py
 ````
+
+
