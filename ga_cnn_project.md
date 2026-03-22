@@ -408,6 +408,14 @@ best = genetic_algorithm(
 Evaluamos el mejor resultado del GA
 
 ````python
+best = genetic_algorithm(
+    data_dir="/content/drive/MyDrive/ga_cnn_project/data"
+)
+
+print("Mejor configuración:", best)
+````
+
+````python
 from train import train_model
 from evaluate import evaluate_model
 from utils import get_dataloaders
