@@ -63,7 +63,7 @@ class GaborDataset(Dataset):
 ``````
 
 gabor_filters
-````
+````pyhton
 import cv2
 import numpy as np
 
@@ -107,7 +107,7 @@ def apply_gabor(image, kernels):
 MODELS 
 
 gabor_cnn
-````pyhton
+````python
 import torch
 import torch.nn as nn
 
@@ -206,7 +206,7 @@ torch.save(model.state_dict(), '/content/drive/MyDrive/gabor_project/model.pth')
 
 EVALUATE
 
-````pyhton
+````python
 import sys
 sys.path.append('/content/drive/MyDrive/gabor_project')
 
@@ -231,7 +231,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = GaborCNN(in_channels=8).to(device)
 
-# ⚠️ Cargar pesos entrenados
+# Cargar pesos entrenados
 model.load_state_dict(torch.load('/content/drive/MyDrive/gabor_project/model.pth'))
 
 model.eval()
