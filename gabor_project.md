@@ -56,8 +56,10 @@ class GaborDataset(Dataset):
 
         gabor = apply_gabor(img, self.kernels)
 
-        gabor = gabor / 255.0
-        gabor = np.transpose(gabor, (2,0,1))  # CLAVE
+        # normalización más estable
+        gabor = gabor / (np.max(gabor) + 1e-6)
+
+        gabor = np.transpose(gabor, (2,0,1))
 
         return torch.tensor(gabor, dtype=torch.float32), self.labels[idx]
 ``````
@@ -81,16 +83,19 @@ import numpy as np
 def build_gabor_kernels():
     kernels = []
 
-    ksize = 21
-    sigmas = [1]
-    thetas = np.arange(0, np.pi, np.pi / 4)
-    lambdas = [10]
-    gammas = [0.5]
+    ksize = 31
+
+    # más fiel al paper
+    sigmas = [1, 3]
+    thetas = np.arange(0, np.pi, np.pi / 4)  # 4 orientaciones
+    lambdas = [5, 10]
+    gammas = [0.5, 1]
 
     for sigma in sigmas:
         for theta in thetas:
             for lambd in lambdas:
                 for gamma in gammas:
+
                     kernel = cv2.getGaborKernel(
                         (ksize, ksize),
                         sigma,
@@ -100,6 +105,7 @@ def build_gabor_kernels():
                         0,
                         ktype=cv2.CV_32F
                     )
+
                     kernels.append(kernel)
 
     return kernels
@@ -110,6 +116,10 @@ def apply_gabor(image, kernels):
 
     for kernel in kernels:
         filtered = cv2.filter2D(image, cv2.CV_32F, kernel)
+
+        # magnitud (más fiel al paper)
+        filtered = np.abs(filtered)
+
         responses.append(filtered)
 
     return np.stack(responses, axis=-1)
@@ -121,33 +131,26 @@ gabor_cnn
 ````python
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
-# =====================
-# SE BLOCK
-# =====================
 class SEBlock(nn.Module):
     def __init__(self, channels, reduction=8):
         super().__init__()
         self.fc1 = nn.Linear(channels, channels // reduction)
         self.fc2 = nn.Linear(channels // reduction, channels)
-        self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        b, c, h, w = x.size()
+        b, c, _, _ = x.size()
 
-        y = nn.functional.adaptive_avg_pool2d(x, 1).view(b, c)
-        y = self.relu(self.fc1(y))
-        y = self.sigmoid(self.fc2(y))
+        y = F.adaptive_avg_pool2d(x, 1).view(b, c)
+        y = torch.relu(self.fc1(y))
+        y = torch.sigmoid(self.fc2(y))
         y = y.view(b, c, 1, 1)
 
         return x * y
 
 
-# =====================
-# MODEL
-# =====================
 class GaborCNN(nn.Module):
     def __init__(self, in_channels, num_classes=4):
         super().__init__()
@@ -156,7 +159,6 @@ class GaborCNN(nn.Module):
         self.conv1 = nn.Conv2d(in_channels, 128, 3, padding=1)
         self.bn1 = nn.BatchNorm2d(128)
 
-        # SE block (paper)
         self.se = SEBlock(128)
 
         self.pool = nn.MaxPool2d(2)
@@ -170,25 +172,18 @@ class GaborCNN(nn.Module):
 
         self.dropout = nn.Dropout(0.5)
 
-        # GAP
         self.gap = nn.AdaptiveAvgPool2d((1,1))
 
-        # FC más profundo (como paper)
         self.fc1 = nn.Linear(128, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, num_classes)
 
     def forward(self, x):
 
-        # Conv inicial
         x = torch.relu(self.bn1(self.conv1(x)))
-
-        # SE block
         x = self.se(x)
-
         x = self.pool(x)
 
-        # Residual
         identity = x
 
         x = torch.relu(self.bn2(self.conv2(x)))
@@ -199,11 +194,9 @@ class GaborCNN(nn.Module):
 
         x = self.dropout(x)
 
-        # GAP
         x = self.gap(x)
         x = torch.flatten(x, 1)
 
-        # FC
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
         x = self.fc3(x)
@@ -234,34 +227,20 @@ from torch.utils.data import DataLoader
 from models.gabor_cnn import GaborCNN
 from utils.dataloader import GaborDataset
 
-# =====================
-# DATA
-# =====================
 train_dataset = GaborDataset('/content/data/Training')
 train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 
-# =====================
-# DEVICE
-# =====================
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# =====================
-# AUTO DETECT CHANNELS
-# =====================
+# detectar canales automáticamente
 sample, _ = next(iter(train_loader))
 in_channels = sample.shape[1]
 
-# =====================
-# MODEL
-# =====================
 model = GaborCNN(in_channels=in_channels).to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
-# =====================
-# TRAIN
-# =====================
 EPOCHS = 5
 
 for epoch in range(EPOCHS):
@@ -271,8 +250,8 @@ for epoch in range(EPOCHS):
     total = 0
 
     for i, (images, labels) in enumerate(train_loader):
-        images = images.float().to(device)
-        labels = labels.long().to(device)
+        images = images.to(device)
+        labels = labels.to(device)
 
         optimizer.zero_grad()
         outputs = model(images)
@@ -287,19 +266,17 @@ for epoch in range(EPOCHS):
         correct += (preds == labels).sum().item()
         total += labels.size(0)
 
-        # progreso por batch
         if i % 20 == 0:
             print(f"Epoch {epoch+1} | Batch {i}/{len(train_loader)} | Loss: {loss.item():.4f}")
 
     avg_loss = total_loss / len(train_loader)
     acc = 100 * correct / total
 
-    print(f"\n Epoch {epoch+1}/{EPOCHS} COMPLETED")
-    print(f"Loss: {avg_loss:.4f} | Accuracy: {acc:.2f}%\n")
+    print(f"\nEpoch {epoch+1}/{EPOCHS}")
+    print(f"Loss: {avg_loss:.4f}")
+    print(f"Accuracy: {acc:.2f}%")
+    print("-"*30)
 
-# =====================
-# SAVE MODEL
-# =====================
 torch.save(model.state_dict(), '/content/drive/MyDrive/gabor_project/model.pth')
 ````
 
@@ -317,36 +294,24 @@ from sklearn.metrics import classification_report, confusion_matrix
 from models.gabor_cnn import GaborCNN
 from utils.dataloader import GaborDataset
 
-# =====================
-# DATA
-# =====================
 test_dataset = GaborDataset('/content/data/Testing')
 test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
 
-# =====================
-# MODEL
-# =====================
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# detectar canales automáticamente
 sample, _ = next(iter(test_loader))
 in_channels = sample.shape[1]
 
 model = GaborCNN(in_channels=in_channels).to(device)
-
-# cargar pesos
 model.load_state_dict(torch.load('/content/drive/MyDrive/gabor_project/model.pth'))
 model.eval()
 
-# =====================
-# EVALUACIÓN
-# =====================
 all_preds = []
 all_labels = []
 
 with torch.no_grad():
     for images, labels in test_loader:
-        images = images.float().to(device)
+        images = images.to(device)
         labels = labels.to(device)
 
         outputs = model(images)
@@ -355,25 +320,16 @@ with torch.no_grad():
         all_preds.extend(preds.cpu().numpy())
         all_labels.extend(labels.cpu().numpy())
 
-# =====================
-# MÉTRICAS
-# =====================
 all_preds = np.array(all_preds)
 all_labels = np.array(all_labels)
 
 accuracy = np.mean(all_preds == all_labels)
 
-print("\n==============================")
-print("RESULTADOS DEL MODELO GABOR")
-print("==============================")
-print(f"\nAccuracy: {accuracy*100:.2f}%\n")
+print("\nRESULTADOS GABOR (FIEL AL PAPER)\n")
+print(f"Accuracy: {accuracy*100:.2f}%\n")
 
-# nombres de clases (dataset brain tumor)
 class_names = ["glioma", "meningioma", "pituitary", "no_tumor"]
 
-print("Classification Report:\n")
 print(classification_report(all_labels, all_preds, target_names=class_names))
-
-print("Confusion Matrix:\n")
 print(confusion_matrix(all_labels, all_preds))
 ````
