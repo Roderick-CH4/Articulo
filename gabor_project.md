@@ -63,7 +63,7 @@ class GaborDataset(Dataset):
 ``````
 
 gabor_filters
-````pyhton
+````python
 import cv2
 import numpy as np
 
