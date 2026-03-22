@@ -79,10 +79,30 @@ def get_dataloaders(data_dir, batch_size=32):
         dataset, [train_size, val_size, test_size]
     )
 
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=batch_size)
-    test_loader = DataLoader(test_data, batch_size=batch_size)
+    train_loader = DataLoader(
+    train_data,
+    batch_size=batch_size,
+    shuffle=True,
+    drop_last=True,
+    num_workers=2,
+    pin_memory=True
+    )
 
+    val_loader = DataLoader(
+        val_data,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=2,
+        pin_memory=True
+    )
+
+    test_loader = DataLoader(
+        test_data,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=2,
+        pin_memory=True
+    )
     return train_loader, val_loader, test_loader
 ````
 
@@ -348,94 +368,176 @@ Algoritmo genetico lo mas apegado al documento
 
 `````python
 import random
+import copy
 from train import train_model
 
+# =========================
+# ESPACIO DE BÚSQUEDA
+# =========================
 param_space = {
-    "filters": [8, 16, 32, 64, 128, 256, 512],
-    "kernel": [2, 3, 4, 5, 6, 7],
-    "dropout": [0, 0.25, 0.5, 0.75],
-    "activation": ["relu", "tanh", "elu", "leaky_relu"],
-    "padding": ["same", "valid"],
-    "pool_size": [2, 3, 4],
-    "batch_size": [4, 8, 16, 32]
+    "activation": ["tanh", "relu", "elu", "leaky_relu"],   # 2 bits
+    "padding": ["same", "valid"],                         # 1 bit
+    "filters": [8, 16, 32, 64, 128, 256, 512, 1024],      # 3 bits
+    "kernel": [2, 3, 4, 5, 6, 7, 8, 9],                   # 3 bits
+    "dropout": [0, 0.25, 0.5, 0.75],                      # 2 bits
+    "pool_size": [2, 3, 4, 5],                            # 2 bits
+    "batch_size": [8, 16, 32]   #quite  4                       # 2 bits
 }
 
+bit_map = {
+    "activation": 2,
+    "padding": 1,
+    "filters": 3,
+    "kernel": 3,
+    "dropout": 2,
+    "pool_size": 2,
+    "batch_size": 2
+}
+
+gene_order = ["activation", "padding", "filters", "kernel",
+              "dropout", "pool_size", "batch_size"]
+
+TOTAL_BITS = sum(bit_map.values())  # 15
+
+# =========================
+# CREACIÓN
+# =========================
 def create_individual():
-    return {key: random.choice(values) for key, values in param_space.items()}
+    return [random.randint(0, 1) for _ in range(TOTAL_BITS)]
 
 def create_population(size):
     return [create_individual() for _ in range(size)]
 
-def is_valid(individual):
-    if individual["kernel"] > 5 and individual["pool_size"] > 2:
-        return False
-    return True
+# =========================
+# DECODIFICACIÓN
+# =========================
+def decode(chromosome):
+    params = {}
+    idx = 0
 
-def fitness(individual, data_dir):
-    if not is_valid(individual):
-        return float("inf")
+    for gene in gene_order:
+        bits = bit_map[gene]
+        segment = chromosome[idx:idx + bits]
+
+        value = int("".join(map(str, segment)), 2)
+        options = param_space[gene]
+        value = value % len(options)
+
+        params[gene] = options[value]
+        idx += bits
+
+    return params
+
+# =========================
+# CACHE (IMPORTANTE)
+# =========================
+fitness_cache = {}
+
+# =========================
+# FITNESS
+# =========================
+def fitness(chromosome, data_dir):
+    key = tuple(chromosome)
+
+    if key in fitness_cache:
+        return fitness_cache[key]
+
+    params = decode(chromosome)
+
     try:
-        _, val_loss = train_model(individual, data_dir, epochs=5)
-        return val_loss
-    except:
-        return float("inf")
+        _, val_loss = train_model(params, data_dir, epochs=10)
+    except Exception as e:
+        print("Error:", e)
+        val_loss = float("inf")
 
-def selection(population, scores, k=3):
-    selected = random.sample(list(zip(population, scores)), k)
-    selected = sorted(selected, key=lambda x: x[1])
-    return selected[0][0]
+    fitness_cache[key] = val_loss
+    return val_loss
 
-def crossover(parent1, parent2):
-    child = {}
-    for key in parent1:
-        child[key] = random.choice([parent1[key], parent2[key]])
-    return child
+# =========================
+# SELECCIÓN (Tournament)
+# =========================
+def selection(population, scores, k=2):
+    selected = random.sample(range(len(population)), k)
+    best = min(selected, key=lambda i: scores[i])
+    return population[best]
 
-def mutate(individual, mutation_rate=0.1):
-    for key in individual:
-        if random.random() < mutation_rate:
-            individual[key] = random.choice(param_space[key])
-    return individual
+# =========================
+# CROSSOVER (2 hijos)
+# =========================
+def crossover(p1, p2, prob=0.9):
+    if random.random() > prob:
+        return copy.deepcopy(p1), copy.deepcopy(p2)
 
-def genetic_algorithm(data_dir, population_size=10, generations=5):
+    point = random.randint(1, TOTAL_BITS - 1)
+
+    c1 = p1[:point] + p2[point:]
+    c2 = p2[:point] + p1[point:]
+
+    return c1, c2
+
+# =========================
+# MUTACIÓN (bit flip)
+# =========================
+def mutate(chromosome, prob=0.05):
+    for i in range(len(chromosome)):
+        if random.random() < prob:
+            chromosome[i] = 1 - chromosome[i]
+    return chromosome
+
+# =========================
+# GA PRINCIPAL
+# =========================
+def genetic_algorithm(data_dir, population_size=30, generations=20):
 
     population = create_population(population_size)
 
-    best_individual = None
+    best_chromosome = None
     best_score = float("inf")
 
     for gen in range(generations):
-        print(f"\nGeneración {gen+1}/{generations}")
+        print(f"\n=== Generación {gen+1}/{generations} ===")
 
         scores = []
 
-        for individual in population:
-            print(f"Evaluando: {individual}")
-            score = fitness(individual, data_dir)
+        # Evaluación
+        for chrom in population:
+            score = fitness(chrom, data_dir)
             scores.append(score)
 
             if score < best_score:
                 best_score = score
-                best_individual = individual
+                best_chromosome = copy.deepcopy(chrom)
 
-        new_population = []
+        print("Best loss:", best_score)
+        print("Best params:", decode(best_chromosome))
 
-        for _ in range(population_size):
-            parent1 = selection(population, scores)
-            parent2 = selection(population, scores)
+        # =========================
+        # ELITISMO
+        # =========================
+        new_population = [copy.deepcopy(best_chromosome)]
 
-            child = crossover(parent1, parent2)
-            child = mutate(child)
+        # =========================
+        # NUEVA GENERACIÓN
+        # =========================
+        while len(new_population) < population_size:
+            p1 = selection(population, scores)
+            p2 = selection(population, scores)
 
-            new_population.append(child)
+            c1, c2 = crossover(p1, p2)
 
-        population = new_population
+            c1 = mutate(c1)
+            c2 = mutate(c2)
 
-    print("\nMejor configuración encontrada:")
-    print(best_individual)
-    print("Validation Loss:", best_score)
+            new_population.extend([c1, c2])
 
-    return best_individual
+        # recortar población
+        population = new_population[:population_size]
+
+    print("\n=== RESULTADO FINAL ===")
+    print("Mejor loss:", best_score)
+    print("Mejores parámetros:", decode(best_chromosome))
+
+    return decode(best_chromosome)
 `````
 
 ## training and optimized
