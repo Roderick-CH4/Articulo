@@ -621,7 +621,7 @@ def evaluate_model(model, test_loader):
     }
 ````
 
-````pyhton
+````python
 from evaluate import evaluate_model
 from train import train_model
 from utils import get_dataloaders
