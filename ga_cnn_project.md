@@ -565,7 +565,7 @@ entrenamiento
 
 optimizacion con GA
 
-````pyhton
+````python
 from ga.genetic_algorithm import genetic_algorithm
 
 best = genetic_algorithm(
