@@ -65,6 +65,7 @@ def get_dataloaders(data_dir, batch_size=32):
     transform = transforms.Compose([
         transforms.Resize((150, 150)),
         transforms.ToTensor(),
+        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ])
 
     dataset = datasets.ImageFolder(root=data_dir, transform=transform)
@@ -92,7 +93,6 @@ def get_dataloaders(data_dir, batch_size=32):
         val_data,
         batch_size=batch_size,
         shuffle=False,
-        drop_last=True,
         num_workers=2,
         pin_memory=True
     )
@@ -101,6 +101,7 @@ def get_dataloaders(data_dir, batch_size=32):
         test_data,
         batch_size=batch_size,
         shuffle=False,
+        drop_last=True,
         num_workers=2,
         pin_memory=True
     )
@@ -173,7 +174,7 @@ class CNNModel(nn.Module):
         self.pool = nn.MaxPool2d(params["pool_size"])
         self.dropout = nn.Dropout(dropout)
 
-        # Global pooling (como ya tenías)
+        # Global pooling (como ya tenías 👍)
         self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
 
         # =========================
@@ -229,6 +230,7 @@ class CNNModel(nn.Module):
         x = self.bn4(x)
         x = self.activation(x)
         x = self.pool(x)
+        x = self.dropout(x)
 
         # Global pooling
         x = self.global_pool(x)
@@ -278,6 +280,8 @@ Entrenamiento del modelo
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import random
+import numpy as np
 
 from models.cnn import CNNModel
 from utils import get_dataloaders
@@ -286,6 +290,10 @@ from utils import get_dataloaders
 def train_model(params, data_dir, epochs=5):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # seeds 
+    torch.cuda.manual_seed_all(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
     # Data
     train_loader, val_loader, test_loader = get_dataloaders(
@@ -378,7 +386,7 @@ from train import train_model
 param_space = {
     "activation": ["tanh", "relu", "elu", "leaky_relu"],   # 2 bits
     "padding": ["same", "valid"],                         # 1 bit
-    "filters": [8, 16, 32, 64, 128, 256, 512, 1024],      # 3 bits
+    "filters": [8, 16, 32, 64, 128, 256],   #quite 512 1024   # 3 bits
     "kernel": [2, 3, 4, 5, 6, 7, 8, 9],                   # 3 bits
     "dropout": [0, 0.25, 0.5, 0.75],                      # 2 bits
     "pool_size": [2, 3, 4, 5],                            # 2 bits
@@ -446,10 +454,18 @@ def fitness(chromosome, data_dir):
     params = decode(chromosome)
 
     try:
-        _, val_loss = train_model(params, data_dir, epochs=10)
+    # VALIDACIÓN RÁPIDA ANTES DE ENTRENAR
+      if params["kernel"] > 5 and params["padding"] == "valid":
+        return float("inf")
+
+      if params["pool_size"] >= 4:
+        return float("inf")
+
+      _, val_loss = train_model(params, data_dir, epochs=2) #10
+
     except Exception as e:
-        print("Error:", e)
-        val_loss = float("inf")
+      print("Error:", e)
+      val_loss = float("inf")
 
     fitness_cache[key] = val_loss
     return val_loss
@@ -564,10 +580,6 @@ best = genetic_algorithm(
 Evaluamos el mejor resultado del GA
 
 ````python
-best = genetic_algorithm(
-    data_dir="/content/drive/MyDrive/ga_cnn_project/data"
-)
-
 print("Mejor configuración:", best)
 ````
 
