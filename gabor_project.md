@@ -56,9 +56,10 @@ class GaborDataset(Dataset):
 
         gabor = apply_gabor(img, self.kernels)
 
-        # normalización más estable
+        # normalización robusta
         gabor = gabor / (np.max(gabor) + 1e-6)
 
+        # NUEVO SHAPE (downsampled)
         gabor = np.transpose(gabor, (2,0,1))
 
         return torch.tensor(gabor, dtype=torch.float32), self.labels[idx]
@@ -80,14 +81,13 @@ gabor_filters
 import cv2
 import numpy as np
 
+
 def build_gabor_kernels():
     kernels = []
 
     ksize = 31
-
-    # más fiel al paper
     sigmas = [1, 3]
-    thetas = np.arange(0, np.pi, np.pi / 4)  # 4 orientaciones
+    thetas = np.arange(0, np.pi, np.pi / 4)
     lambdas = [5, 10]
     gammas = [0.5, 1]
 
@@ -96,7 +96,8 @@ def build_gabor_kernels():
             for lambd in lambdas:
                 for gamma in gammas:
 
-                    kernel = cv2.getGaborKernel(
+                    # parte real
+                    real = cv2.getGaborKernel(
                         (ksize, ksize),
                         sigma,
                         theta,
@@ -106,7 +107,18 @@ def build_gabor_kernels():
                         ktype=cv2.CV_32F
                     )
 
-                    kernels.append(kernel)
+                    # parte imaginaria (fase π/2)
+                    imag = cv2.getGaborKernel(
+                        (ksize, ksize),
+                        sigma,
+                        theta,
+                        lambd,
+                        gamma,
+                        np.pi/2,
+                        ktype=cv2.CV_32F
+                    )
+
+                    kernels.append((real, imag))
 
     return kernels
 
@@ -114,15 +126,40 @@ def build_gabor_kernels():
 def apply_gabor(image, kernels):
     responses = []
 
-    for kernel in kernels:
-        filtered = cv2.filter2D(image, cv2.CV_32F, kernel)
+    # =====================
+    # GABOR COMPLEJO
+    # =====================
+    for real_k, imag_k in kernels:
 
-        # magnitud (más fiel al paper)
-        filtered = np.abs(filtered)
+        real_resp = cv2.filter2D(image, cv2.CV_32F, real_k)
+        imag_resp = cv2.filter2D(image, cv2.CV_32F, imag_k)
 
-        responses.append(filtered)
+        # magnitud real del paper
+        magnitude = np.sqrt(real_resp**2 + imag_resp**2)
 
-    return np.stack(responses, axis=-1)
+        responses.append(magnitude)
+
+    # =====================
+    # LPF (Low-pass)
+    # =====================
+    lpf = cv2.GaussianBlur(image, (5,5), 0)
+    responses.append(lpf)
+
+    # =====================
+    # HPF (High-pass)
+    # =====================
+    hpf = cv2.Laplacian(image, cv2.CV_32F)
+    responses.append(hpf)
+
+    responses = np.stack(responses, axis=-1)
+
+    # =====================
+    # DOWNSAMPLING (ANTI-ALIASING)
+    # =====================
+    responses = cv2.GaussianBlur(responses, (3,3), 0)
+    responses = responses[:, ::2, ::2]  # reduce resolución
+
+    return responses
 ````
 
 MODELS 
@@ -209,7 +246,8 @@ import torch
 import torch.nn as nn
 from models.gabor_cnn import GaborCNN
 
-model = GaborCNN(in_channels=32)  # depende de cuantos kernels generes
+sample, _ = next(iter(train_loader))
+model = GaborCNN(in_channels=sample.shape[1])
 
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
