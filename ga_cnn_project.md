@@ -51,6 +51,8 @@ The dataset that we use to train the model is retrieved from https://www.kaggle.
 !unzip covid-pneumonia-normal-chest-xray-images.zip -d data/
 
 !ls data/
+
+!cp -r /content/drive/MyDrive/ga_cnn_project/data /content/data # carga direccta y no desde drive 
 ````
 The code in until.py
 ````python
@@ -106,13 +108,7 @@ import torch
 import torch.nn as nn
 
 
-
 class CNNModel(nn.Module):
-
-    def _initialize_weights(self):
-      for m in self.modules():
-        if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
-            nn.init.xavier_uniform_(m.weight)
 
     def __init__(self, params, num_classes=3):
         super(CNNModel, self).__init__()
@@ -121,7 +117,9 @@ class CNNModel(nn.Module):
         kernel_size = params["kernel"]
         dropout = params["dropout"]
 
-        # Activación
+        # =========================
+        # ACTIVACIÓN
+        # =========================
         if params["activation"] == "relu":
             self.activation = nn.ReLU()
         elif params["activation"] == "tanh":
@@ -135,7 +133,10 @@ class CNNModel(nn.Module):
 
         padding = kernel_size // 2 if params["padding"] == "same" else 0
 
-        # Bloques CNN
+        # =========================
+        # BLOQUES CONVOLUCIONALES (x4)
+        # Conv → BN → Act → Pool → Dropout
+        # =========================
         self.conv1 = nn.Conv2d(3, filters, kernel_size, padding=padding)
         self.bn1 = nn.BatchNorm2d(filters)
 
@@ -149,38 +150,77 @@ class CNNModel(nn.Module):
         self.bn4 = nn.BatchNorm2d(filters * 8)
 
         self.pool = nn.MaxPool2d(params["pool_size"])
-
-        # CLAVE: SIEMPRE reduce a 1x1
-        self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.dropout = nn.Dropout(dropout)
 
-        # Fully Connected
+        # Global pooling (como ya tenías)
+        self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
+
+        # =========================
+        # FULLY CONNECTED BLOCK
+        # Linear → BN → Act → Dropout → Linear
+        # =========================
         self.fc1 = nn.Linear(filters * 8, 128)
+        self.bn_fc1 = nn.BatchNorm1d(128)
+
         self.fc2 = nn.Linear(128, num_classes)
 
+        # Inicialización
         self._initialize_weights()
 
+    # =========================
+    # INIT WEIGHTS (GLOROT)
+    # =========================
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+
+    # =========================
+    # FORWARD
+    # =========================
     def forward(self, x):
 
-        x = self.pool(self.activation(self.bn1(self.conv1(x))))
+        # ----- BLOQUE 1 -----
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.activation(x)
+        x = self.pool(x)
         x = self.dropout(x)
 
-        x = self.pool(self.activation(self.bn2(self.conv2(x))))
+        # ----- BLOQUE 2 -----
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.activation(x)
+        x = self.pool(x)
         x = self.dropout(x)
 
-        x = self.pool(self.activation(self.bn3(self.conv3(x))))
+        # ----- BLOQUE 3 -----
+        x = self.conv3(x)
+        x = self.bn3(x)
+        x = self.activation(x)
+        x = self.pool(x)
         x = self.dropout(x)
 
-        x = self.pool(self.activation(self.bn4(self.conv4(x))))
+        # ----- BLOQUE 4 -----
+        x = self.conv4(x)
+        x = self.bn4(x)
+        x = self.activation(x)
+        x = self.pool(x)
 
-        # SIEMPRE antes del flatten
+        # Global pooling
         x = self.global_pool(x)
 
-        # flatten seguro
+        # Flatten
         x = torch.flatten(x, 1)
 
+        # ----- FC BLOCK -----
         x = self.fc1(x)
+        x = self.bn_fc1(x)
         x = self.activation(x)
+        x = self.dropout(x)
+
         x = self.fc2(x)
 
         return x
@@ -203,6 +243,8 @@ params = {
 
 model = CNNModel(params)
 
+model.eval()  # CLAVE
+
 x = torch.randn(1, 3, 150, 150)
 y = model(x)
 
@@ -222,7 +264,7 @@ from utils import get_dataloaders
 
 def train_model(params, data_dir, epochs=5):
 
-    device = torch.device("cuda")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Data
     train_loader, val_loader, test_loader = get_dataloaders(
@@ -236,7 +278,9 @@ def train_model(params, data_dir, epochs=5):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-    # Entrenamiento
+    # =========================
+    # ENTRENAMIENTO
+    # =========================
     for epoch in range(epochs):
         model.train()
         total_loss = 0
@@ -252,10 +296,15 @@ def train_model(params, data_dir, epochs=5):
             optimizer.step()
 
             total_loss += loss.item()
-            
-        print(f"Epoch [{epoch+1}/{epochs}], Loss: {total_loss:.4f}")
 
-    # Validación (fitness para GA después)
+        # PROMEDIO
+        avg_train_loss = total_loss / len(train_loader)
+
+        print(f"Epoch [{epoch+1}/{epochs}], Loss: {avg_train_loss:.4f}")
+
+    # =========================
+    # VALIDACIÓN
+    # =========================
     model.eval()
     val_loss = 0
 
@@ -263,12 +312,16 @@ def train_model(params, data_dir, epochs=5):
         for images, labels in val_loader:
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
+
             loss = criterion(outputs, labels)
             val_loss += loss.item()
 
-    print(f"Validation Loss: {val_loss:.4f}")
+    # PROMEDIO
+    avg_val_loss = val_loss / len(val_loader)
 
-    return model, val_loss
+    print(f"Validation Loss: {avg_val_loss:.4f}")
+
+    return model, avg_val_loss
 
 
 if __name__ == "__main__":
@@ -285,7 +338,7 @@ if __name__ == "__main__":
 
     model, val_loss = train_model(
         params,
-        data_dir="/content/drive/MyDrive/ga_cnn_project/data",
+        data_dir="/content/data",  # mejor que Drive
         epochs=5
     )
 ````
