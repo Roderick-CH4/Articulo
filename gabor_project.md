@@ -10,6 +10,7 @@ Estructura
 !touch /content/drive/MyDrive/gabor_project/utils/dataloader.py
 !touch /content/drive/MyDrive/gabor_project/train.py
 !touch /content/drive/MyDrive/gabor_project/evaluate.py
+!touch /content/drive/MyDrive/gabor_project/preprocesamiento.py
 ````
 
 DATASET
@@ -17,6 +18,55 @@ DATASET
 ````
 !kaggle datasets download -d masoudnickparvar/brain-tumor-mri-dataset
 !unzip brain-tumor-mri-dataset.zip -d /content/data
+````
+
+PREPROCESAMIENTO 
+````python
+import os
+import cv2
+import numpy as np
+from tqdm import tqdm
+
+from utils.gabor_filters import build_gabor_kernels, apply_gabor
+
+INPUT_DIR = "/content/data"
+OUTPUT_DIR = "/content/data_gabor"
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+kernels = build_gabor_kernels()
+
+for split in ["Training", "Testing"]:
+    in_path = os.path.join(INPUT_DIR, split)
+    out_path = os.path.join(OUTPUT_DIR, split)
+
+    os.makedirs(out_path, exist_ok=True)
+
+    classes = os.listdir(in_path)
+
+    for cls in classes:
+        os.makedirs(os.path.join(out_path, cls), exist_ok=True)
+
+        for img_name in tqdm(os.listdir(os.path.join(in_path, cls)), desc=f"{split}-{cls}"):
+
+            img_path = os.path.join(in_path, cls, img_name)
+            img = cv2.imread(img_path)
+
+            img = cv2.resize(img, (224,224))
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+            gabor = apply_gabor(img, kernels)
+
+            # NORMALIZACIÓN
+            gabor = (gabor - gabor.mean()) / (gabor.std() + 1e-6)
+
+            # Guardar como numpy
+            save_path = os.path.join(out_path, cls, img_name.replace(".jpg", ".npy"))
+            np.save(save_path, gabor)
+````
+DATASET PREPROCESADO
+````
+!python preprocesamiento.py
 ````
 
 UTILS 
