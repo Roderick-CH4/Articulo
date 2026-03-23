@@ -86,27 +86,19 @@ class GaborDataset(Dataset):
     def __init__(self, root_dir):
         self.paths = []
         self.labels = []
-        self.kernels = build_gabor_kernels()
 
         classes = sorted(os.listdir(root_dir))
 
         for i, cls in enumerate(classes):
-            for img in os.listdir(os.path.join(root_dir, cls)):
-                self.paths.append(os.path.join(root_dir, cls, img))
+            for file in os.listdir(os.path.join(root_dir, cls)):
+                self.paths.append(os.path.join(root_dir, cls, file))
                 self.labels.append(i)
 
     def __len__(self):
         return len(self.paths)
 
     def __getitem__(self, idx):
-        img = cv2.imread(self.paths[idx])
-        img = cv2.resize(img, (224,224))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-        gabor = apply_gabor(img, self.kernels)
-
-        # Normalización estable
-        gabor = (gabor - gabor.mean()) / (gabor.std() + 1e-6)
+        gabor = np.load(self.paths[idx])
 
         gabor = np.transpose(gabor, (2,0,1))
 
@@ -117,8 +109,8 @@ class GaborDataset(Dataset):
 from torch.utils.data import DataLoader
 from utils.dataloader import GaborDataset
 
-train_dataset = GaborDataset('/content/data/Training')
-test_dataset = GaborDataset('/content/data/Testing')
+train_dataset = GaborDataset('/content/data_gabor/Training')
+test_dataset = GaborDataset('/content/data_gabor/Testing')
 
 train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=16)
@@ -305,6 +297,14 @@ model = GaborCNN(in_channels=sample.shape[1])
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 ````
+Revision de datos 
+`````python
+for x, y in train_loader:
+    print("Batch:", x.shape)
+    print("Labels:", y.shape)
+    print("Min:", x.min().item(), "Max:", x.max().item())
+    break
+``````
 TRAIN
 
 ````python
@@ -315,7 +315,8 @@ import torch.nn as nn
 from models.gabor_cnn import GaborCNN
 from utils.dataloader import GaborDataset
 
-dataset = GaborDataset('/content/data/Training')
+# dataset = GaborDataset('/content/data/Training')
+dataset = GaborDataset('/content/data_gabor/Training')
 
 train_size = int(0.8 * len(dataset))
 val_size = len(dataset) - train_size
@@ -341,23 +342,22 @@ best_loss = float('inf')
 patience = 7
 counter = 0
 
-for epoch in range(100):
+from tqdm import tqdm
 
+for epoch in range(3): #100
     # TRAIN
     model.train()
     train_loss = 0
-
-    for images, labels in train_loader:
+    pbar = tqdm(train_loader, desc=f"Epoch {epoch+1} Train")
+    for images, labels in pbar:
         images, labels = images.to(device), labels.to(device)
-
         optimizer.zero_grad()
         outputs = model(images)
-
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-
         train_loss += loss.item()
+        pbar.set_postfix(loss=loss.item())
 
     # VALIDATION
     model.eval()
@@ -401,16 +401,19 @@ from sklearn.metrics import classification_report, confusion_matrix
 from models.gabor_cnn import GaborCNN
 from utils.dataloader import GaborDataset
 
-test_dataset = GaborDataset('/content/data/Testing')
+# Ruta a los datos de prueba (cámbiala si usaste data_gabor)
+test_dataset = GaborDataset('/content/data_gabor/Testing')
 test_loader = DataLoader(test_dataset, batch_size=16)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 sample, _ = next(iter(test_loader))
-in_channels = sample.shape[1]
+in_channels = sample.shape[1]  # 24
 
 model = GaborCNN(in_channels=in_channels).to(device)
-model.load_state_dict(torch.load('/content/drive/MyDrive/gabor_project/model.pth'))
+
+# Cargar pesos; si estás en CPU, añade map_location
+model.load_state_dict(torch.load('/content/drive/MyDrive/gabor_project/model.pth', map_location=device))
 model.eval()
 
 all_preds = []
