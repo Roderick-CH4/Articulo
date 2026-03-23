@@ -48,19 +48,18 @@ for split in ["Training", "Testing"]:
         os.makedirs(os.path.join(out_path, cls), exist_ok=True)
 
         for img_name in tqdm(os.listdir(os.path.join(in_path, cls)), desc=f"{split}-{cls}"):
-
             img_path = os.path.join(in_path, cls, img_name)
             img = cv2.imread(img_path)
 
+            # Redimensionar
             img = cv2.resize(img, (224,224))
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # Convertir a escala de grises y normalizar a [0,1]
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float32) / 255.0
 
+            # Aplicar filtros Gabor (ya no normalizamos después)
             gabor = apply_gabor(img, kernels)
 
-            # NORMALIZACIÓN
-            gabor = (gabor - gabor.mean()) / (gabor.std() + 1e-6)
-
-            # Guardar como numpy
+            # Guardar directamente sin normalización adicional
             save_path = os.path.join(out_path, cls, img_name.replace(".jpg", ".npy"))
             np.save(save_path, gabor)
 ````
