@@ -51,16 +51,16 @@ class GaborDataset(Dataset):
 
     def __getitem__(self, idx):
         img = cv2.imread(self.paths[idx])
-        img = cv2.resize(img, (150,150))
+        img = cv2.resize(img, (150, 150))
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         gabor = apply_gabor(img, self.kernels)
 
-        # normalización robusta
+        # Normalización robusta
         gabor = gabor / (np.max(gabor) + 1e-6)
 
-        # NUEVO SHAPE (downsampled)
-        gabor = np.transpose(gabor, (2,0,1))
+        # (H, W, C) → (C, H, W)
+        gabor = np.transpose(gabor, (2, 0, 1))
 
         return torch.tensor(gabor, dtype=torch.float32), self.labels[idx]
 ``````
@@ -78,86 +78,104 @@ test_loader = DataLoader(test_dataset, batch_size=16)
 
 gabor_filters
 ````python
-import cv2
 import numpy as np
+import cv2
 
 
+# =========================
+# GABOR KERNEL (PAPER)
+# =========================
+def gabor_kernel(ksize, sigma, theta, frequency):
+    half = ksize // 2
+    y, x = np.mgrid[-half:half+1, -half:half+1]
+
+    # Rotación
+    x_theta = x * np.cos(theta) + y * np.sin(theta)
+
+    # Gabor real e imaginario
+    real = np.exp(-(x**2 + y**2) / (2 * sigma**2)) * np.cos(2 * np.pi * frequency * x_theta)
+    imag = np.exp(-(x**2 + y**2) / (2 * sigma**2)) * np.sin(2 * np.pi * frequency * x_theta)
+
+    return real.astype(np.float32), imag.astype(np.float32)
+
+
+# =========================
+# BUILD FILTER BANK (PAPER)
+# =========================
 def build_gabor_kernels():
+
     kernels = []
 
-    ksize = 31
-    sigmas = [1, 3]
-    thetas = np.arange(0, np.pi, np.pi / 4)
-    lambdas = [5, 10]
-    gammas = [0.5, 1]
+    # Frecuencias del paper
+    f1 = 0.1
+    f2 = 0.23
+    f3 = 0.4
 
-    for sigma in sigmas:
+    # Orientaciones por escala (paper)
+    orientations = [4, 6, 8]
+    freqs = [f1, f2, f3]
+
+    for f, num_theta in zip(freqs, orientations):
+
+        thetas = np.linspace(0, np.pi, num_theta, endpoint=False)
+
+        # sigma según paper (relación con frecuencia)
+        sigma = 1 / (2 * np.pi * f)
+
+        # tamaño kernel dinámico (paper)
+        ksize = int(2 * 3 * sigma + 1)
+        if ksize % 2 == 0:
+            ksize += 1
+
         for theta in thetas:
-            for lambd in lambdas:
-                for gamma in gammas:
-
-                    # parte real
-                    real = cv2.getGaborKernel(
-                        (ksize, ksize),
-                        sigma,
-                        theta,
-                        lambd,
-                        gamma,
-                        0,
-                        ktype=cv2.CV_32F
-                    )
-
-                    # parte imaginaria (fase π/2)
-                    imag = cv2.getGaborKernel(
-                        (ksize, ksize),
-                        sigma,
-                        theta,
-                        lambd,
-                        gamma,
-                        np.pi/2,
-                        ktype=cv2.CV_32F
-                    )
-
-                    kernels.append((real, imag))
+            real, imag = gabor_kernel(ksize, sigma, theta, f)
+            kernels.append((real, imag))
 
     return kernels
 
 
+# =========================
+# APPLY GABOR (PAPER)
+# =========================
 def apply_gabor(image, kernels):
+
     responses = []
 
-    # =====================
-    # GABOR COMPLEJO
-    # =====================
+    image = image.astype(np.float32)
+
+    # Gabor complejo → magnitud
     for real_k, imag_k in kernels:
 
         real_resp = cv2.filter2D(image, cv2.CV_32F, real_k)
         imag_resp = cv2.filter2D(image, cv2.CV_32F, imag_k)
 
-        # magnitud real del paper
         magnitude = np.sqrt(real_resp**2 + imag_resp**2)
-
         responses.append(magnitude)
 
     # =====================
-    # LPF (Low-pass)
+    # LPF (paper)
     # =====================
-    lpf = cv2.GaussianBlur(image, (5,5), 0)
+    lpf = cv2.GaussianBlur(image, (5, 5), 0)
     responses.append(lpf)
 
     # =====================
-    # HPF (High-pass)
+    # HPF (paper)
     # =====================
     hpf = cv2.Laplacian(image, cv2.CV_32F)
     responses.append(hpf)
 
+    # Stack → (H, W, C)
     responses = np.stack(responses, axis=-1)
 
     # =====================
-    # DOWNSAMPLING (ANTI-ALIASING)
+    # Anti-aliasing (paper)
     # =====================
-    responses = cv2.GaussianBlur(responses, (3,3), 0)
-    responses = responses[:, ::2, ::2]  # reduce resolución
+    responses = cv2.GaussianBlur(responses, (3, 3), 0)
+
+    # =====================
+    # Downsampling (paper)
+    # =====================
+    responses = responses[::2, ::2, :]
 
     return responses
 ````
@@ -192,7 +210,6 @@ class GaborCNN(nn.Module):
     def __init__(self, in_channels, num_classes=4):
         super().__init__()
 
-        # Conv inicial
         self.conv1 = nn.Conv2d(in_channels, 128, 3, padding=1)
         self.bn1 = nn.BatchNorm2d(128)
 
@@ -200,7 +217,7 @@ class GaborCNN(nn.Module):
 
         self.pool = nn.MaxPool2d(2)
 
-        # Residual block
+        # Residual
         self.conv2 = nn.Conv2d(128, 128, 3, padding=1)
         self.bn2 = nn.BatchNorm2d(128)
 
@@ -209,7 +226,7 @@ class GaborCNN(nn.Module):
 
         self.dropout = nn.Dropout(0.5)
 
-        self.gap = nn.AdaptiveAvgPool2d((1,1))
+        self.gap = nn.AdaptiveAvgPool2d((1, 1))
 
         self.fc1 = nn.Linear(128, 128)
         self.fc2 = nn.Linear(128, 64)
@@ -255,9 +272,6 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 TRAIN
 
 ````python
-import sys
-sys.path.append('/content/drive/MyDrive/gabor_project')
-
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -270,7 +284,6 @@ train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# detectar canales automáticamente
 sample, _ = next(iter(train_loader))
 in_channels = sample.shape[1]
 
@@ -305,25 +318,16 @@ for epoch in range(EPOCHS):
         total += labels.size(0)
 
         if i % 20 == 0:
-            print(f"Epoch {epoch+1} | Batch {i}/{len(train_loader)} | Loss: {loss.item():.4f}")
+            print(f"Epoch {epoch+1} | Batch {i} | Loss: {loss.item():.4f}")
 
-    avg_loss = total_loss / len(train_loader)
-    acc = 100 * correct / total
-
-    print(f"\nEpoch {epoch+1}/{EPOCHS}")
-    print(f"Loss: {avg_loss:.4f}")
-    print(f"Accuracy: {acc:.2f}%")
-    print("-"*30)
-
-torch.save(model.state_dict(), '/content/drive/MyDrive/gabor_project/model.pth')
+    print(f"\nEpoch {epoch+1}")
+    print(f"Loss: {total_loss/len(train_loader):.4f}")
+    print(f"Accuracy: {100*correct/total:.2f}%")
 ````
 
 EVALUATE
 
 ````python
-import sys
-sys.path.append('/content/drive/MyDrive/gabor_project')
-
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
@@ -333,7 +337,7 @@ from models.gabor_cnn import GaborCNN
 from utils.dataloader import GaborDataset
 
 test_dataset = GaborDataset('/content/data/Testing')
-test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+test_loader = DataLoader(test_dataset, batch_size=16)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -358,13 +362,9 @@ with torch.no_grad():
         all_preds.extend(preds.cpu().numpy())
         all_labels.extend(labels.cpu().numpy())
 
-all_preds = np.array(all_preds)
-all_labels = np.array(all_labels)
+accuracy = np.mean(np.array(all_preds) == np.array(all_labels))
 
-accuracy = np.mean(all_preds == all_labels)
-
-print("\nRESULTADOS GABOR (FIEL AL PAPER)\n")
-print(f"Accuracy: {accuracy*100:.2f}%\n")
+print(f"\nAccuracy: {accuracy*100:.2f}%\n")
 
 class_names = ["glioma", "meningioma", "pituitary", "no_tumor"]
 
