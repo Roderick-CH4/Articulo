@@ -32,6 +32,7 @@ from torch.utils.data import Dataset
 from utils.gabor_filters import build_gabor_kernels, apply_gabor
 
 
+# utils/dataloader.py
 class GaborDataset(Dataset):
     def __init__(self, root_dir):
         self.paths = []
@@ -40,27 +41,23 @@ class GaborDataset(Dataset):
 
         classes = sorted(os.listdir(root_dir))
 
-        for idx, cls in enumerate(classes):
-            class_path = os.path.join(root_dir, cls)
-            for img in os.listdir(class_path):
-                self.paths.append(os.path.join(class_path, img))
-                self.labels.append(idx)
+        for i, cls in enumerate(classes):
+            for img in os.listdir(os.path.join(root_dir, cls)):
+                self.paths.append(os.path.join(root_dir, cls, img))
+                self.labels.append(i)
 
     def __len__(self):
         return len(self.paths)
 
     def __getitem__(self, idx):
         img = cv2.imread(self.paths[idx])
-        img = cv2.resize(img, (150, 150))
+        img = cv2.resize(img, (224,224))  # CORRECTO
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         gabor = apply_gabor(img, self.kernels)
 
-        # Normalización robusta
         gabor = gabor / (np.max(gabor) + 1e-6)
-
-        # (H, W, C) → (C, H, W)
-        gabor = np.transpose(gabor, (2, 0, 1))
+        gabor = np.transpose(gabor, (2,0,1))
 
         return torch.tensor(gabor, dtype=torch.float32), self.labels[idx]
 ``````
@@ -78,104 +75,78 @@ test_loader = DataLoader(test_dataset, batch_size=16)
 
 gabor_filters
 ````python
+# utils/gabor_filters.py
 import numpy as np
 import cv2
 
-
-# =========================
-# GABOR KERNEL (PAPER)
-# =========================
-def gabor_kernel(ksize, sigma, theta, frequency):
+def gabor_kernel(ksize, sigma, theta, freq):
     half = ksize // 2
     y, x = np.mgrid[-half:half+1, -half:half+1]
 
-    # Rotación
     x_theta = x * np.cos(theta) + y * np.sin(theta)
 
-    # Gabor real e imaginario
-    real = np.exp(-(x**2 + y**2) / (2 * sigma**2)) * np.cos(2 * np.pi * frequency * x_theta)
-    imag = np.exp(-(x**2 + y**2) / (2 * sigma**2)) * np.sin(2 * np.pi * frequency * x_theta)
+    gaussian = np.exp(-(x**2 + y**2) / (2 * sigma**2))
+
+    real = gaussian * np.cos(2 * np.pi * freq * x_theta)
+    imag = gaussian * np.sin(2 * np.pi * freq * x_theta)
 
     return real.astype(np.float32), imag.astype(np.float32)
 
 
-# =========================
-# BUILD FILTER BANK (PAPER)
-# =========================
 def build_gabor_kernels():
-
     kernels = []
 
-    # Frecuencias del paper
-    f1 = 0.1
-    f2 = 0.23
-    f3 = 0.4
-
-    # Orientaciones por escala (paper)
+    freqs = [0.1, 0.23, 0.4]
     orientations = [4, 6, 8]
-    freqs = [f1, f2, f3]
 
-    for f, num_theta in zip(freqs, orientations):
+    for f, n_theta in zip(freqs, orientations):
 
-        thetas = np.linspace(0, np.pi, num_theta, endpoint=False)
-
-        # sigma según paper (relación con frecuencia)
         sigma = 1 / (2 * np.pi * f)
-
-        # tamaño kernel dinámico (paper)
-        ksize = int(2 * 3 * sigma + 1)
+        ksize = int(6 * sigma + 1)
         if ksize % 2 == 0:
             ksize += 1
 
+        thetas = np.linspace(0, np.pi, n_theta, endpoint=False)
+
         for theta in thetas:
             real, imag = gabor_kernel(ksize, sigma, theta, f)
-            kernels.append((real, imag))
+
+            # SHIFTING (lo que te faltaba)
+            for shift_x in [-2, 0, 2]:
+                for shift_y in [-2, 0, 2]:
+                    real_shifted = np.roll(real, shift=(shift_x, shift_y), axis=(0, 1))
+                    imag_shifted = np.roll(imag, shift=(shift_x, shift_y), axis=(0, 1))
+
+                    kernels.append((real_shifted, imag_shifted))
 
     return kernels
 
-
-# =========================
-# APPLY GABOR (PAPER)
-# =========================
 def apply_gabor(image, kernels):
-
     responses = []
-
     image = image.astype(np.float32)
 
-    # Gabor complejo → magnitud
     for real_k, imag_k in kernels:
+        real = cv2.filter2D(image, cv2.CV_32F, real_k)
+        imag = cv2.filter2D(image, cv2.CV_32F, imag_k)
 
-        real_resp = cv2.filter2D(image, cv2.CV_32F, real_k)
-        imag_resp = cv2.filter2D(image, cv2.CV_32F, imag_k)
+        mag = np.sqrt(real**2 + imag**2)
+        responses.append(mag)
 
-        magnitude = np.sqrt(real_resp**2 + imag_resp**2)
-        responses.append(magnitude)
-
-    # =====================
-    # LPF (paper)
-    # =====================
-    lpf = cv2.GaussianBlur(image, (5, 5), 0)
+    # LPF
+    lpf = cv2.GaussianBlur(image, (5,5), 0)
     responses.append(lpf)
 
-    # =====================
-    # HPF (paper)
-    # =====================
+    # HPF
     hpf = cv2.Laplacian(image, cv2.CV_32F)
     responses.append(hpf)
 
-    # Stack → (H, W, C)
     responses = np.stack(responses, axis=-1)
 
-    # =====================
-    # Anti-aliasing (paper)
-    # =====================
-    responses = cv2.GaussianBlur(responses, (3, 3), 0)
+    # Anti-aliasing (CRÍTICO)
+    responses = cv2.GaussianBlur(responses, (3,3), 0)
 
-    # =====================
-    # Downsampling (paper)
-    # =====================
-    responses = responses[::2, ::2, :]
+    # Downsample 224 → 56
+    responses = responses[::4, ::4, :]
 
     return responses
 ````
@@ -184,25 +155,22 @@ MODELS
 
 gabor_cnn
 ````python
+# models/gabor_cnn.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class SEBlock(nn.Module):
-    def __init__(self, channels, reduction=8):
+    def __init__(self, c, r=2):
         super().__init__()
-        self.fc1 = nn.Linear(channels, channels // reduction)
-        self.fc2 = nn.Linear(channels // reduction, channels)
+        self.fc1 = nn.Linear(c, c//r)
+        self.fc2 = nn.Linear(c//r, c)
 
     def forward(self, x):
-        b, c, _, _ = x.size()
-
-        y = F.adaptive_avg_pool2d(x, 1).view(b, c)
+        b,c,_,_ = x.size()
+        y = F.adaptive_avg_pool2d(x,1).view(b,c)
         y = torch.relu(self.fc1(y))
-        y = torch.sigmoid(self.fc2(y))
-        y = y.view(b, c, 1, 1)
-
+        y = torch.sigmoid(self.fc2(y)).view(b,c,1,1)
         return x * y
 
 
@@ -210,32 +178,32 @@ class GaborCNN(nn.Module):
     def __init__(self, in_channels, num_classes=4):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(in_channels, 128, 3, padding=1)
+        # 🔴 SE PRIMERO (paper)
+        self.se = SEBlock(in_channels)
+
+        self.conv1 = nn.Conv2d(in_channels,128,3,padding=1)
         self.bn1 = nn.BatchNorm2d(128)
-
-        self.se = SEBlock(128)
-
         self.pool = nn.MaxPool2d(2)
 
         # Residual
-        self.conv2 = nn.Conv2d(128, 128, 3, padding=1)
+        self.conv2 = nn.Conv2d(128,128,3,padding=1)
         self.bn2 = nn.BatchNorm2d(128)
 
-        self.conv3 = nn.Conv2d(128, 128, 3, padding=1)
+        self.conv3 = nn.Conv2d(128,128,3,padding=1)
         self.bn3 = nn.BatchNorm2d(128)
 
         self.dropout = nn.Dropout(0.5)
+        self.gap = nn.AdaptiveAvgPool2d(1)
 
-        self.gap = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc1 = nn.Linear(128,128)
+        self.fc2 = nn.Linear(128,64)
+        self.fc3 = nn.Linear(64,num_classes)
 
-        self.fc1 = nn.Linear(128, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, num_classes)
+    def forward(self,x):
 
-    def forward(self, x):
+        x = self.se(x)
 
         x = torch.relu(self.bn1(self.conv1(x)))
-        x = self.se(x)
         x = self.pool(x)
 
         identity = x
@@ -249,7 +217,7 @@ class GaborCNN(nn.Module):
         x = self.dropout(x)
 
         x = self.gap(x)
-        x = torch.flatten(x, 1)
+        x = torch.flatten(x,1)
 
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
@@ -292,17 +260,18 @@ model = GaborCNN(in_channels=in_channels).to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
-EPOCHS = 5
+EPOCHS = 100
+
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer, patience=5, factor=0.5
+)
 
 for epoch in range(EPOCHS):
     model.train()
     total_loss = 0
-    correct = 0
-    total = 0
 
-    for i, (images, labels) in enumerate(train_loader):
-        images = images.to(device)
-        labels = labels.to(device)
+    for images, labels in train_loader:
+        images, labels = images.to(device), labels.to(device)
 
         optimizer.zero_grad()
         outputs = model(images)
@@ -313,16 +282,9 @@ for epoch in range(EPOCHS):
 
         total_loss += loss.item()
 
-        _, preds = torch.max(outputs, 1)
-        correct += (preds == labels).sum().item()
-        total += labels.size(0)
+    scheduler.step(total_loss)
 
-        if i % 20 == 0:
-            print(f"Epoch {epoch+1} | Batch {i} | Loss: {loss.item():.4f}")
-
-    print(f"\nEpoch {epoch+1}")
-    print(f"Loss: {total_loss/len(train_loader):.4f}")
-    print(f"Accuracy: {100*correct/total:.2f}%")
+    print(f"Epoch {epoch+1} Loss {total_loss/len(train_loader)}")
 ````
 
 EVALUATE
