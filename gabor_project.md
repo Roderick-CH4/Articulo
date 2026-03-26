@@ -1,3 +1,7 @@
+algorithm-based hyperparameter optimization
+
+We try to reconstruct architecture to this article https://link.springer.com/article/10.1007/s11263-025-02658-2#Sec2 using in the first part google colabs and then copy into local machine.
+
 Estructura 
 ````
 !mkdir -p /content/drive/MyDrive/gabor_project
