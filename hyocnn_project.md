@@ -4,32 +4,28 @@ We try to reconstruct architecture to this article https://www.sciencedirect.com
 
 Project's structure
 ````
-hyocnn_project/
+pso_cnn_project/
 │
 ├── data/
 ├── models/
-│   └── xception_model.py
-├── optimization/
-│   ├── pso.py
-│   ├── ga.py
-│   └── hybrid_pso_ga.py
+│   └── cnn.py
+├── pso/
+│   └── pso.py
 ├── train.py
 ├── evaluate.py
 └── utils.py
 ````
 
 ```` bash
-!mkdir -p /content/drive/MyDrive/hyocnn_project
+!mkdir -p /content/drive/MyDrive/pso_cnn_project
 
-!mkdir -p /content/drive/MyDrive/hyocnn_project/data
-!mkdir -p /content/drive/MyDrive/hyocnn_project/models
-!mkdir -p /content/drive/MyDrive/hyocnn_project/optimization
+!mkdir -p /content/drive/MyDrive/pso_cnn_project/data
+!mkdir -p /content/drive/MyDrive/pso_cnn_project/models
+!mkdir -p /content/drive/MyDrive/pso_cnn_project/pso
 
-!touch /content/drive/MyDrive/hyocnn_project/models/xception_model.py
-!touch /content/drive/MyDrive/hyocnn_project/optimization/pso.py
-!touch /content/drive/MyDrive/hyocnn_project/optimization/ga.py
-!touch /content/drive/MyDrive/hyocnn_project/optimization/hybrid_pso_ga.py
-!touch /content/drive/MyDrive/hyocnn_project/train.py
-!touch /content/drive/MyDrive/hyocnn_project/evaluate.py
-!touch /content/drive/MyDrive/hyocnn_project/utils.py
+!touch /content/drive/MyDrive/pso_cnn_project/models/cnn.py
+!touch /content/drive/MyDrive/pso_cnn_project/optimization/pso.py
+!touch /content/drive/MyDrive/pso_cnn_project/train.py
+!touch /content/drive/MyDrive/pso_cnn_project/evaluate.py
+!touch /content/drive/MyDrive/pso_cnn_project/utils.py
 ````
