@@ -24,7 +24,7 @@ pso_cnn_project/
 !mkdir -p /content/drive/MyDrive/pso_cnn_project/pso
 
 !touch /content/drive/MyDrive/pso_cnn_project/models/cnn.py
-!touch /content/drive/MyDrive/pso_cnn_project/optimization/pso.py
+!touch /content/drive/MyDrive/pso_cnn_project/pso/pso.py
 !touch /content/drive/MyDrive/pso_cnn_project/train.py
 !touch /content/drive/MyDrive/pso_cnn_project/evaluate.py
 !touch /content/drive/MyDrive/pso_cnn_project/utils.py
