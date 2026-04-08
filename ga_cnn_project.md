@@ -377,6 +377,7 @@ Algoritmo genetico lo mas apegado al documento
 `````python
 import random
 import copy
+import matplotlib as plt
 from train import train_model
 
 # =========================
@@ -514,11 +515,15 @@ def genetic_algorithm(data_dir, population_size=30, generations=20):
         print(f"\n=== Generación {gen+1}/{generations} ===")
 
         scores = []
+        n_gen = []
+
+        n_gen.append(gen)
 
         # Evaluación
         for chrom in population:
             score = fitness(chrom, data_dir)
             scores.append(score)
+            
 
             if score < best_score:
                 best_score = score
@@ -552,6 +557,18 @@ def genetic_algorithm(data_dir, population_size=30, generations=20):
     print("\n=== RESULTADO FINAL ===")
     print("Mejor loss:", best_score)
     print("Mejores parámetros:", decode(best_chromosome))
+
+    # Datos
+    x = scores
+    y = n_gen
+
+    # Gráfico con color rojo y línea discontinua
+    plt.plot(x, y, color='red', linestyle='--', linewidth=2)
+    plt.title('Onda Senoidal')
+    plt.xlabel('Eje X')
+    plt.ylabel('Eje Y')
+    plt.grid(True)
+    plt.show()
 
     return decode(best_chromosome)
 `````
