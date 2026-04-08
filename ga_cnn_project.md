@@ -800,7 +800,7 @@ class CNNModel(nn.Module):
         self.pool = nn.MaxPool2d(params["pool_size"])
         self.dropout = nn.Dropout(dropout)
 
-        # Global pooling (como ya tenías 👍)
+        # Global pooling 
         self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
 
         # =========================
